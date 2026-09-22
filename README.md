@@ -301,7 +301,7 @@ OnlineProjectManagementTool/
 ```
 
 # Database Design
-
+```txt
 The application uses the following main tables:
 
 1. users: Stores user account and role information.
@@ -315,12 +315,13 @@ The application uses the following main tables:
 5. task_assignments: Stores task-to-member assignments.
 
 6. activity_logs: Stores important system actions for audit history.
-
+```
 
 
 # Application Flow:
 
 ## Registration
+```txt
 User
   ↓
 Register Form
@@ -334,8 +335,9 @@ Password Hashing
 UserDAO
   ↓
 MySQL
-
+```
 ## Login
+```txt
 User
   ↓
 Login Form
@@ -349,8 +351,9 @@ Password Verification
 Session Creation
   ↓
 Role-Based Dashboard
-
+```
 ## Task Management
+```txt
 Manager
   ↓
 Create Task
@@ -366,7 +369,7 @@ Assign Task
 Team Member
   ↓
 Update Status
-
+```
 # Running the Project
 
 ## 1. Start MySQL
@@ -374,16 +377,20 @@ Update Status
 Make sure MySQL Server is running.
 
 ## 2. Start Tomcat
+```cmd
 cd /d "C:\Coding & Skills\apache-tomcat-10.1.60\bin"
 startup.bat
+```
 
 ## 3. Build the project
+```cmd
 cd /d "C:\Coding & Skills\OnlineProjectManagementTool"
 mvn clean package
-
+```
 ## 4. Deploy
+```cmd
 deploy.bat
-
+```
 ## 5. Verify the server
 ```cmd
 timeout /t 3
