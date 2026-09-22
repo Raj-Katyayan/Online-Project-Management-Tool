@@ -1,0 +1,8 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.*" %><%@ page import="com.jvmcrew.model.*" %>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Add Members | The JVM Crew</title><link rel="stylesheet" href="<%=request.getContextPath()%>/css/style.css"></head><body>
+<div class="page"><% Project project=(Project)request.getAttribute("project"); List<User> members=(List<User>)request.getAttribute("members"); List<Integer> existing=(List<Integer>)request.getAttribute("existingMemberIds"); String error=(String)request.getAttribute("error"); %>
+<a href="<%=request.getContextPath()%>/manager/project?id=<%=project.getProjectId()%>" style="color:#a78bfa;text-decoration:none">← Back to Project</a>
+<div class="form-card" style="max-width:850px;margin:30px auto 0"><p class="badge">ADD TEAM MEMBER</p><h1>Add Members</h1><p class="muted">Project: <strong><%=project.getProjectName()%></strong></p><% if(error!=null){ %><div class="message"><%=error%></div><% } %>
+<% for(User u:members){ boolean added=existing!=null&&existing.contains(u.getUserId()); %><div class="member-item" style="margin-bottom:12px"><div><strong><%=u.getName()%></strong><div class="muted"><%=u.getEmail()%></div></div><% if(added){ %><span style="color:#70e0a0">✓ Added</span><% } else { %><form action="<%=request.getContextPath()%>/manager/add-member" method="post"><input type="hidden" name="projectId" value="<%=project.getProjectId()%>"><input type="hidden" name="userId" value="<%=u.getUserId()%>"><button class="btn btn-primary">Add</button></form><% } %></div><% } %>
+</div></div></body></html>

@@ -1,0 +1,16 @@
+# Database configuration
+db.properties
+
+# Maven
+target/
+
+# IDE
+.vscode/
+.idea/
+
+# Java
+*.class
+
+# OS
+Thumbs.db
+.DS_Store
