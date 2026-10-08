@@ -1,19 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="
+            http://maven.apache.org/POM/4.0.0
+            https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.jvmcrew</groupId>
     <artifactId>OnlineProjectManagementTool</artifactId>
     <version>1.0-SNAPSHOT</version>
+
     <packaging>war</packaging>
 
     <properties>
+
         <maven.compiler.release>26</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <project.build.sourceEncoding>
+            UTF-8
+        </project.build.sourceEncoding>
+
     </properties>
+
 
     <dependencies>
 
@@ -25,6 +33,7 @@
             <scope>provided</scope>
         </dependency>
 
+
         <!-- Jakarta JSP -->
         <dependency>
             <groupId>jakarta.servlet.jsp</groupId>
@@ -33,46 +42,109 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Jakarta JSTL / Tags API -->
+
+        <!-- Jakarta JSTL API -->
         <dependency>
             <groupId>jakarta.servlet.jsp.jstl</groupId>
             <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
             <version>3.0.0</version>
         </dependency>
 
-        <!-- Jakarta JSTL / Tags implementation -->
+
+        <!-- JSTL Implementation -->
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
             <version>3.0.1</version>
         </dependency>
 
-        <!-- MySQL -->
+
+        <!-- MySQL JDBC Driver -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>9.4.0</version>
         </dependency>
 
+
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.14.4</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
+
 
     <build>
 
-        <finalName>project-management-tool</finalName>
+        <finalName>
+            project-management-tool
+        </finalName>
+
 
         <plugins>
 
+
+            <!-- Java Compiler -->
             <plugin>
+
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+
+                <artifactId>
+                    maven-compiler-plugin
+                </artifactId>
+
                 <version>3.13.0</version>
+
+                <configuration>
+
+                    <release>
+                        26
+                    </release>
+
+                </configuration>
+
             </plugin>
 
+
+            <!-- JUnit Test Runner -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
+
+                <groupId>
+                    org.apache.maven.plugins
+                </groupId>
+
+                <artifactId>
+                    maven-surefire-plugin
+                </artifactId>
+
+                <version>
+                    3.5.4
+                </version>
+
             </plugin>
+
+
+            <!-- WAR Packaging -->
+            <plugin>
+
+                <groupId>
+                    org.apache.maven.plugins
+                </groupId>
+
+                <artifactId>
+                    maven-war-plugin
+                </artifactId>
+
+                <version>
+                    3.4.0
+                </version>
+
+            </plugin>
+
 
         </plugins>
 

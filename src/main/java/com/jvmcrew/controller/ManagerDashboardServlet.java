@@ -1,8 +1,7 @@
 package com.jvmcrew.controller;
 
-import com.jvmcrew.dao.ProjectDAO;
-import com.jvmcrew.dao.ProjectMemberDAO;
-import com.jvmcrew.dao.TaskDAO;
+import com.jvmcrew.model.Project;
+import com.jvmcrew.service.ManagerDashboardService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,18 +12,15 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/manager/dashboard")
-public class ManagerDashboardServlet extends HttpServlet {
+public class ManagerDashboardServlet
+        extends HttpServlet {
 
-    private final ProjectDAO projectDAO =
-            new ProjectDAO();
-
-    private final TaskDAO taskDAO =
-            new TaskDAO();
-
-    private final ProjectMemberDAO projectMemberDAO =
-            new ProjectMemberDAO();
+    private final ManagerDashboardService dashboardService =
+            new ManagerDashboardService();
 
 
     @Override
@@ -70,16 +66,56 @@ public class ManagerDashboardServlet extends HttpServlet {
         try {
 
             int managerId =
-                    (Integer) session.getAttribute("userId");
+                    (Integer) session.getAttribute(
+                            "userId"
+                    );
 
 
             /*
-             * Existing project list.
+             * Read search/filter parameters.
              */
-            request.setAttribute(
-                    "projects",
-                    projectDAO.getProjectsByManager(managerId)
-            );
+            String search =
+                    request.getParameter("search");
+
+            String status =
+                    request.getParameter("status");
+
+            String priority =
+                    request.getParameter("priority");
+
+
+            /*
+             * Load projects.
+             */
+            List<Project> projects;
+
+            boolean hasFilters =
+                    (search != null && !search.isBlank())
+                    || (status != null
+                        && !status.isBlank()
+                        && !"ALL".equalsIgnoreCase(status))
+                    || (priority != null
+                        && !priority.isBlank()
+                        && !"ALL".equalsIgnoreCase(priority));
+
+
+            if (hasFilters) {
+
+                projects =
+                        dashboardService.searchProjects(
+                                managerId,
+                                search,
+                                status,
+                                priority
+                        );
+
+            } else {
+
+                projects =
+                        dashboardService.getProjects(
+                                managerId
+                        );
+            }
 
 
             /*
@@ -89,32 +125,51 @@ public class ManagerDashboardServlet extends HttpServlet {
              */
 
             int totalProjects =
-                    projectDAO.getProjectCountByManager(
+                    dashboardService.getTotalProjects(
                             managerId
                     );
 
             int totalTasks =
-                    taskDAO.getTaskCountByManager(
+                    dashboardService.getTotalTasks(
                             managerId
                     );
 
             int inProgressTasks =
-                    taskDAO.getTaskCountByManagerAndStatus(
-                            managerId,
-                            "IN_PROGRESS"
-                    );
-
-            int completedTasks =
-                    taskDAO.getTaskCountByManagerAndStatus(
-                            managerId,
-                            "COMPLETED"
-                    );
-
-            int teamMembers =
-                    projectMemberDAO.getUniqueMemberCountByManager(
+                    dashboardService.getInProgressTasks(
                             managerId
                     );
 
+            int completedTasks =
+                    dashboardService.getCompletedTasks(
+                            managerId
+                    );
+
+            int teamMembers =
+                    dashboardService.getTeamMembers(
+                            managerId
+                    );
+
+
+            /*
+             * =========================
+             * PROJECT PROGRESS
+             * =========================
+             */
+
+            Map<Integer, Integer> projectProgress =
+                    dashboardService.getProjectProgress(
+                            managerId
+                    );
+
+
+            /*
+             * Send data to JSP.
+             */
+
+            request.setAttribute(
+                    "projects",
+                    projects
+            );
 
             request.setAttribute(
                     "totalProjects",
@@ -141,10 +196,60 @@ public class ManagerDashboardServlet extends HttpServlet {
                     teamMembers
             );
 
+            request.setAttribute(
+                    "projectProgress",
+                    projectProgress
+            );
+
+
+            /*
+             * Preserve search/filter values.
+             */
+            request.setAttribute(
+                    "search",
+                    search == null
+                            ? ""
+                            : search
+            );
+
+            request.setAttribute(
+                    "selectedStatus",
+                    status == null
+                            || status.isBlank()
+                            ? "ALL"
+                            : status
+            );
+
+            request.setAttribute(
+                    "selectedPriority",
+                    priority == null
+                            || priority.isBlank()
+                            ? "ALL"
+                            : priority
+            );
+
 
             request.getRequestDispatcher(
                     "/manager/dashboard.jsp"
-            ).forward(request, response);
+            ).forward(
+                    request,
+                    response
+            );
+
+
+        } catch (IllegalArgumentException e) {
+
+            request.setAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
+            request.getRequestDispatcher(
+                    "/manager/dashboard.jsp"
+            ).forward(
+                    request,
+                    response
+            );
 
 
         } catch (SQLException e) {
@@ -153,13 +258,15 @@ public class ManagerDashboardServlet extends HttpServlet {
 
             request.setAttribute(
                     "error",
-                    "Database Error: "
-                    + e.getMessage()
+                    "Database error while loading dashboard."
             );
 
             request.getRequestDispatcher(
                     "/manager/dashboard.jsp"
-            ).forward(request, response);
+            ).forward(
+                    request,
+                    response
+            );
         }
     }
 }

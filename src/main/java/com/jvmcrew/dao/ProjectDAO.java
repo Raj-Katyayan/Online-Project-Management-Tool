@@ -60,8 +60,74 @@ public class ProjectDAO {
 
         return projects;
     }
+	
+	public List<Project> searchProjects(
+        int managerId,
+        String search,
+        String status,
+        String priority) throws SQLException {
 
+    StringBuilder sql = new StringBuilder("""
+            SELECT project_id, project_name, description,
+                   start_date, end_date, priority, status, manager_id
+            FROM projects
+            WHERE manager_id = ?
+            """);
 
+    List<Object> parameters = new ArrayList<>();
+
+    parameters.add(managerId);
+
+    if (search != null && !search.isBlank()) {
+        sql.append("""
+                AND (
+                    project_name LIKE ?
+                    OR description LIKE ?
+                )
+                """);
+
+        String searchPattern = "%" + search.trim() + "%";
+
+        parameters.add(searchPattern);
+        parameters.add(searchPattern);
+    }
+
+    if (status != null && !status.isBlank()
+            && !"ALL".equalsIgnoreCase(status)) {
+
+        sql.append(" AND status = ?");
+        parameters.add(status.trim().toUpperCase());
+    }
+
+    if (priority != null && !priority.isBlank()
+            && !"ALL".equalsIgnoreCase(priority)) {
+
+        sql.append(" AND priority = ?");
+        parameters.add(priority.trim().toUpperCase());
+    }
+
+    sql.append(" ORDER BY created_at DESC");
+
+    List<Project> projects = new ArrayList<>();
+
+    try (Connection c = DBConnection.getConnection();
+         PreparedStatement ps = c.prepareStatement(sql.toString())) {
+
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                projects.add(mapProject(rs));
+            }
+        }
+    }
+
+    return projects;
+}
+	
     public Project getProjectForManager(
             int projectId,
             int managerId) throws SQLException {
