@@ -130,7 +130,7 @@ public class ProjectDetailsServlet extends HttpServlet {
              */
 
             request.getRequestDispatcher(
-                    "/manager/project-details.jsp"
+                    "/WEB-INF/views/manager/project-details.jsp"
             ).forward(request, response);
 
 
@@ -168,7 +168,7 @@ public class ProjectDetailsServlet extends HttpServlet {
             );
 
             request.getRequestDispatcher(
-                    "/manager/project-details.jsp"
+                    "/WEB-INF/views/manager/project-details.jsp"
             ).forward(request, response);
         }
     }

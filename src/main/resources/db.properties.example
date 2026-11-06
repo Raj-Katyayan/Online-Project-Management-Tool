@@ -1,0 +1,7 @@
+# Copy this template to db.properties for local development.
+# Never commit the real db.properties file or put real secrets here.
+
+# Local MySQL example
+db.url=jdbc:mysql://localhost:3306/project_management
+db.username=YOUR_MYSQL_USERNAME
+db.password=YOUR_MYSQL_PASSWORD

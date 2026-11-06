@@ -1,8 +1,8 @@
 package com.jvmcrew.controller;
 
 import com.jvmcrew.dao.ProjectDAO;
-import com.jvmcrew.dao.ProjectMemberDAO;
 import com.jvmcrew.dao.TaskAssignmentDAO;
+import com.jvmcrew.dao.TaskAssignmentDAO.AssignmentResult;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,247 +13,143 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 
 @WebServlet("/manager/assign-task")
 public class AssignTaskServlet extends HttpServlet {
 
-    private final ProjectDAO projectDAO =
-            new ProjectDAO();
-
-    private final ProjectMemberDAO projectMemberDAO =
-            new ProjectMemberDAO();
-
-    private final TaskAssignmentDAO assignmentDAO =
-            new TaskAssignmentDAO();
-
+    private final ProjectDAO projectDAO = new ProjectDAO();
+    private final TaskAssignmentDAO assignmentDAO = new TaskAssignmentDAO();
 
     @Override
     protected void doPost(
             HttpServletRequest request,
-            HttpServletResponse response)
-            throws IOException {
+            HttpServletResponse response) throws IOException {
 
-        HttpSession session =
-                request.getSession(false);
-
-
-        /*
-         * =========================
-         * AUTHENTICATION + ROLE
-         * =========================
-         */
+        HttpSession session = request.getSession(false);
 
         if (session == null
                 || session.getAttribute("userId") == null
-                || !"MANAGER".equals(
-                        session.getAttribute("userRole"))) {
-
+                || !"MANAGER".equals(session.getAttribute("userRole"))) {
             response.sendError(
                     HttpServletResponse.SC_FORBIDDEN,
                     "Access denied."
             );
-
             return;
         }
 
+        Integer projectId = parsePositiveInteger(
+                request.getParameter("projectId")
+        );
+        Integer taskId = parsePositiveInteger(
+                request.getParameter("taskId")
+        );
+        Integer userId = parsePositiveInteger(
+                request.getParameter("userId")
+        );
 
-        try {
-
-            /*
-             * =========================
-             * READ REQUEST PARAMETERS
-             * =========================
-             */
-
-            String projectIdText =
-                    request.getParameter("projectId");
-
-            String taskIdText =
-                    request.getParameter("taskId");
-
-            String userIdText =
-                    request.getParameter("userId");
-
-
-            /*
-             * =========================
-             * BASIC VALIDATION
-             * =========================
-             */
-
-            if (projectIdText == null
-                    || projectIdText.isBlank()
-                    || taskIdText == null
-                    || taskIdText.isBlank()) {
-
+        if (projectId == null || taskId == null || userId == null) {
+            if (projectId != null) {
                 redirectWithError(
                         request,
                         response,
-                        "Invalid project or task information."
+                        projectId,
+                        "Select a valid project, task and team member."
                 );
-
-                return;
+            } else {
+                response.sendError(
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "Invalid project, task or member ID."
+                );
             }
+            return;
+        }
 
+        int managerId = (Integer) session.getAttribute("userId");
 
-            int projectId =
-                    Integer.parseInt(projectIdText);
-
-            int taskId =
-                    Integer.parseInt(taskIdText);
-
-            int managerId =
-                    (Integer) session.getAttribute("userId");
-
-
-            /*
-             * =========================
-             * PROJECT OWNERSHIP CHECK
-             * =========================
-             */
-
-            if (projectDAO.getProjectForManager(
-                    projectId,
-                    managerId
-            ) == null) {
-
+        try {
+            // Controller-level authorization gives a clear 403 response.
+            // The DAO repeats the ownership condition inside its INSERT SQL
+            // so the write is protected even if called from another code path.
+            if (projectDAO.getProjectForManager(projectId, managerId) == null) {
                 response.sendError(
                         HttpServletResponse.SC_FORBIDDEN,
                         "You cannot modify this project."
                 );
-
                 return;
             }
 
-
-            /*
-             * =========================
-             * NO MEMBER SELECTED
-             * =========================
-             *
-             * If userId is empty, determine whether
-             * the project has any team members.
-             */
-
-            if (userIdText == null
-                    || userIdText.isBlank()) {
-
-                boolean hasMembers =
-                        !projectMemberDAO
-                                .getMembersByProject(projectId)
-                                .isEmpty();
-
-
-                if (!hasMembers) {
-
-                    redirectWithError(
-                            request,
-                            response,
-                            "No team members have been added to this project. Please add a team member first."
-                    );
-
-                } else {
-
-                    redirectWithError(
-                            request,
-                            response,
-                            "Please select a team member to assign this task."
-                    );
-                }
-
-                return;
-            }
-
-
-            /*
-             * =========================
-             * MEMBER SELECTION
-             * =========================
-             */
-
-            int userId =
-                    Integer.parseInt(userIdText);
-
-
-            /*
-             * =========================
-             * ASSIGN TASK
-             * =========================
-             */
-
-            assignmentDAO.assignTask(
+            AssignmentResult result = assignmentDAO.assignTaskToProjectMember(
+                    projectId,
                     taskId,
-                    userId
+                    userId,
+                    managerId
             );
 
+            switch (result) {
+                case ASSIGNED -> response.sendRedirect(
+                        request.getContextPath()
+                                + "/manager/project?id=" + projectId
+                );
 
-            /*
-             * =========================
-             * SUCCESS
-             * =========================
-             */
+                case ALREADY_ASSIGNED -> redirectWithError(
+                        request,
+                        response,
+                        projectId,
+                        "This task is already assigned to the selected member."
+                );
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/manager/project?id="
-                            + projectId
+                case INVALID_TASK_OR_MEMBER -> redirectWithError(
+                        request,
+                        response,
+                        projectId,
+                        "The selected task must belong to this project and the selected user must be a member of this project."
+                );
+            }
+
+        } catch (SQLException e) {
+            getServletContext().log(
+                    "Database error while assigning task " + taskId
+                            + " in project " + projectId,
+                    e
             );
-
-
-        } catch (NumberFormatException e) {
-
             redirectWithError(
                     request,
                     response,
-                    "Invalid project, task, or member information."
-            );
-
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            redirectWithError(
-                    request,
-                    response,
-                    "Could not assign task."
+                    projectId,
+                    "The task could not be assigned because of a database error. Please try again."
             );
         }
     }
 
+    private Integer parsePositiveInteger(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
 
-    /*
-     * =========================
-     * ERROR REDIRECT
-     * =========================
-     *
-     * Sends the manager back to the project page
-     * with a readable error message.
-     */
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return parsed > 0 ? parsed : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
     private void redirectWithError(
             HttpServletRequest request,
             HttpServletResponse response,
-            String message)
-            throws IOException {
+            int projectId,
+            String message) throws IOException {
 
-        String encodedMessage =
-                URLEncoder.encode(
-                        message,
-                        StandardCharsets.UTF_8
-                );
-
-
-        String projectId =
-                request.getParameter("projectId");
-
+        String encodedMessage = URLEncoder.encode(
+                message,
+                StandardCharsets.UTF_8
+        );
 
         response.sendRedirect(
                 request.getContextPath()
-                        + "/manager/project?id="
-                        + projectId
-                        + "&error="
-                        + encodedMessage
+                        + "/manager/project?id=" + projectId
+                        + "&error=" + encodedMessage
         );
     }
 }

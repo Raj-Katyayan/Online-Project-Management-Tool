@@ -82,7 +82,7 @@ public class AdminDashboardServlet extends HttpServlet {
 
 
             request.getRequestDispatcher(
-                    "/admin/dashboard.jsp"
+                    "/WEB-INF/views/admin/dashboard.jsp"
             ).forward(request, response);
 
 
@@ -102,7 +102,7 @@ public class AdminDashboardServlet extends HttpServlet {
              * the error message.
              */
             request.getRequestDispatcher(
-                    "/admin/dashboard.jsp"
+                    "/WEB-INF/views/admin/dashboard.jsp"
             ).forward(request, response);
         }
     }

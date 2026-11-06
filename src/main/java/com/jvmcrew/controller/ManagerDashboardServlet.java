@@ -230,7 +230,7 @@ public class ManagerDashboardServlet
 
 
             request.getRequestDispatcher(
-                    "/manager/dashboard.jsp"
+                    "/WEB-INF/views/manager/dashboard.jsp"
             ).forward(
                     request,
                     response
@@ -245,7 +245,7 @@ public class ManagerDashboardServlet
             );
 
             request.getRequestDispatcher(
-                    "/manager/dashboard.jsp"
+                    "/WEB-INF/views/manager/dashboard.jsp"
             ).forward(
                     request,
                     response
@@ -262,7 +262,7 @@ public class ManagerDashboardServlet
             );
 
             request.getRequestDispatcher(
-                    "/manager/dashboard.jsp"
+                    "/WEB-INF/views/manager/dashboard.jsp"
             ).forward(
                     request,
                     response

@@ -33,11 +33,11 @@ public class AddMemberServlet extends HttpServlet {
             List<User> members = userDAO.getAllMembers();
             request.setAttribute("members", members);
             request.setAttribute("existingMemberIds", memberDAO.getMemberIds(pid));
-            request.getRequestDispatcher("/manager/add-member.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/manager/add-member.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Database Error: " + e.getMessage());
-            request.getRequestDispatcher("/manager/add-member.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/manager/add-member.jsp").forward(request, response);
         }
     }
 

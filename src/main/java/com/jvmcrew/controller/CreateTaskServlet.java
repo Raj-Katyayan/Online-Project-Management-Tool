@@ -20,16 +20,11 @@ public class CreateTaskServlet extends HttpServlet {
     private final CreateTaskService taskService =
             new CreateTaskService();
 
-
     private boolean checkManager(HttpSession session) {
-
         return session != null
                 && session.getAttribute("userId") != null
-                && "MANAGER".equals(
-                        session.getAttribute("userRole")
-                );
+                && "MANAGER".equals(session.getAttribute("userRole"));
     }
-
 
     @Override
     protected void doGet(
@@ -37,67 +32,35 @@ public class CreateTaskServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session =
-                request.getSession(false);
-
+        HttpSession session = request.getSession(false);
         if (!checkManager(session)) {
-            response.sendError(
-                    HttpServletResponse.SC_FORBIDDEN,
-                    "Access denied."
-            );
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied.");
             return;
         }
 
-
         try {
-
-            int projectId = Integer.parseInt(
-                    request.getParameter("projectId")
-            );
-
-            int managerId =
-                    (Integer) session.getAttribute("userId");
-
-
-            Project project =
-                    taskService.getManagerProject(
-                            projectId,
-                            managerId
-                    );
-
-
-            if (project == null) {
-
-                response.sendError(
-                        HttpServletResponse.SC_NOT_FOUND,
-                        "Project not found."
-                );
-
+            int projectId = Integer.parseInt(request.getParameter("projectId"));
+            if (projectId <= 0) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid project ID.");
                 return;
             }
 
+            int managerId = (Integer) session.getAttribute("userId");
+            Project project = taskService.getManagerProject(projectId, managerId);
 
-            request.setAttribute(
-                    "project",
-                    project
-            );
+            if (project == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Project not found.");
+                return;
+            }
 
-
-            request.getRequestDispatcher(
-                    "/manager/create-task.jsp"
-            ).forward(request, response);
-
+            request.setAttribute("project", project);
+            request.getRequestDispatcher("/WEB-INF/views/manager/create-task.jsp")
+                    .forward(request, response);
 
         } catch (NumberFormatException e) {
-
-            response.sendError(
-                    HttpServletResponse.SC_BAD_REQUEST,
-                    "Invalid project ID."
-            );
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid project ID.");
         } catch (Exception e) {
-
-            e.printStackTrace();
-
+            getServletContext().log("Unable to load the project task form.", e);
             response.sendError(
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Unable to load project."
@@ -105,91 +68,71 @@ public class CreateTaskServlet extends HttpServlet {
         }
     }
 
-
     @Override
     protected void doPost(
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session =
-                request.getSession(false);
-
+        HttpSession session = request.getSession(false);
         if (!checkManager(session)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied.");
+            return;
+        }
+
+        final int projectId;
+        try {
+            projectId = Integer.parseInt(request.getParameter("projectId"));
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid project ID.");
+            return;
+        }
+
+        if (projectId <= 0) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid project ID.");
+            return;
+        }
+
+        int managerId = (Integer) session.getAttribute("userId");
+        final Project project;
+
+        try {
+            project = taskService.getManagerProject(projectId, managerId);
+        } catch (Exception e) {
+            getServletContext().log("Unable to verify project ownership.", e);
             response.sendError(
-                    HttpServletResponse.SC_FORBIDDEN,
-                    "Access denied."
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to verify project."
             );
             return;
         }
 
+        if (project == null) {
+            response.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "You cannot modify this project."
+            );
+            return;
+        }
+
+        // Preserve the project for the JSP if validation or creation fails.
+        request.setAttribute("project", project);
 
         try {
-
-            int projectId = Integer.parseInt(
-                    request.getParameter("projectId")
-            );
-
-            int managerId =
-                    (Integer) session.getAttribute("userId");
-
-
-            /*
-             * Verify that the manager owns the project.
-             */
-            Project project =
-                    taskService.getManagerProject(
-                            projectId,
-                            managerId
-                    );
-
-
-            if (project == null) {
-
-                response.sendError(
-                        HttpServletResponse.SC_FORBIDDEN,
-                        "You cannot modify this project."
-                );
-
-                return;
-            }
-
-
-            String title =
-                    request.getParameter("title");
-
-            String description =
-                    request.getParameter("description");
-
-            String startText =
-                    request.getParameter("startDate");
-
-            String dueText =
-                    request.getParameter("dueDate");
-
-            String priority =
-                    request.getParameter("priority");
-
+            String title = request.getParameter("title");
+            String description = request.getParameter("description");
+            String startText = request.getParameter("startDate");
+            String dueText = request.getParameter("dueDate");
+            String priority = request.getParameter("priority");
 
             LocalDate startDate;
-
             LocalDate dueDate;
-
             try {
-
-                startDate =
-                        LocalDate.parse(startText);
-
-                dueDate =
-                        LocalDate.parse(dueText);
-
+                startDate = LocalDate.parse(startText);
+                dueDate = LocalDate.parse(dueText);
             } catch (Exception e) {
-
-                throw new IllegalArgumentException(
-                        "Please enter valid task dates."
-                );
+                throw new IllegalArgumentException("Please enter valid task dates.");
             }
-
 
             Task task = new Task(
                     projectId,
@@ -201,62 +144,27 @@ public class CreateTaskServlet extends HttpServlet {
                     dueDate
             );
 
-
-            boolean created =
-                    taskService.createTask(task);
-
-
-            if (!created) {
-
-                throw new IllegalStateException(
-                        "Task creation failed."
-                );
+            if (!taskService.createTask(task)) {
+                throw new IllegalStateException("Task creation failed.");
             }
 
-
             response.sendRedirect(
-                    request.getContextPath()
-                            + "/manager/project?id="
-                            + projectId
+                    request.getContextPath() + "/manager/project?id=" + projectId
             );
-
-
-        } catch (NumberFormatException e) {
-
-            request.setAttribute(
-                    "error",
-                    "Invalid project ID."
-            );
-
-            request.getRequestDispatcher(
-                    "/manager/create-task.jsp"
-            ).forward(request, response);
-
 
         } catch (IllegalArgumentException e) {
-
-            request.setAttribute(
-                    "error",
-                    e.getMessage()
-            );
-
-            request.getRequestDispatcher(
-                    "/manager/create-task.jsp"
-            ).forward(request, response);
-
+            request.setAttribute("error", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/manager/create-task.jsp")
+                    .forward(request, response);
 
         } catch (Exception e) {
-
-            e.printStackTrace();
-
+            getServletContext().log("Unable to create task.", e);
             request.setAttribute(
                     "error",
                     "Unable to create the task right now. Please try again."
             );
-
-            request.getRequestDispatcher(
-                    "/manager/create-task.jsp"
-            ).forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/manager/create-task.jsp")
+                    .forward(request, response);
         }
     }
 }

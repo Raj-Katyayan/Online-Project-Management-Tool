@@ -21,11 +21,11 @@ public class MemberDashboardServlet extends HttpServlet {
         }
         try {
             request.setAttribute("tasks", taskDAO.getTasksByUser((Integer) s.getAttribute("userId")));
-            request.getRequestDispatcher("/member/dashboard.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/member/dashboard.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Database Error: " + e.getMessage());
-            request.getRequestDispatcher("/member/dashboard.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/member/dashboard.jsp").forward(request, response);
         }
     }
 }

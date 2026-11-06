@@ -46,7 +46,7 @@ public class CreateProjectServlet extends HttpServlet {
         }
 
         request.getRequestDispatcher(
-                "/manager/create-project.jsp"
+                "/WEB-INF/views/manager/create-project.jsp"
         ).forward(request, response);
     }
 
@@ -148,7 +148,7 @@ public class CreateProjectServlet extends HttpServlet {
             );
 
             request.getRequestDispatcher(
-                    "/manager/create-project.jsp"
+                    "/WEB-INF/views/manager/create-project.jsp"
             ).forward(request, response);
 
 
@@ -160,7 +160,7 @@ public class CreateProjectServlet extends HttpServlet {
             );
 
             request.getRequestDispatcher(
-                    "/manager/create-project.jsp"
+                    "/WEB-INF/views/manager/create-project.jsp"
             ).forward(request, response);
 
 
@@ -174,7 +174,7 @@ public class CreateProjectServlet extends HttpServlet {
             );
 
             request.getRequestDispatcher(
-                    "/manager/create-project.jsp"
+                    "/WEB-INF/views/manager/create-project.jsp"
             ).forward(request, response);
         }
     }

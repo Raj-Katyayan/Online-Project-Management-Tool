@@ -10,59 +10,43 @@ class ProjectStatusServiceValidationTest {
     private final ProjectStatusService statusService =
             new ProjectStatusService();
 
-
     @Test
     void shouldRejectInvalidProjectId() {
-
         assertThrows(
                 ValidationException.class,
-                () -> statusService.updateStatus(
-                        0,
-                        2,
-                        "PLANNED"
-                )
+                () -> statusService.updateStatus(0, 2, "PLANNED")
         );
     }
-
 
     @Test
     void shouldRejectInvalidManagerId() {
-
         assertThrows(
                 ValidationException.class,
-                () -> statusService.updateStatus(
-                        1,
-                        0,
-                        "PLANNED"
-                )
+                () -> statusService.updateStatus(1, 0, "PLANNED")
         );
     }
 
+    @Test
+    void shouldRejectNullStatus() {
+        assertThrows(
+                ValidationException.class,
+                () -> statusService.updateStatus(1, 2, null)
+        );
+    }
 
     @Test
     void shouldRejectBlankStatus() {
-
         assertThrows(
                 ValidationException.class,
-                () -> statusService.updateStatus(
-                        1,
-                        2,
-                        "   "
-                )
+                () -> statusService.updateStatus(1, 2, "   ")
         );
     }
 
-
     @Test
     void shouldRejectInvalidStatus() {
-
         assertThrows(
                 ValidationException.class,
-                () -> statusService.updateStatus(
-                        1,
-                        2,
-                        "INVALID_STATUS"
-                )
+                () -> statusService.updateStatus(1, 2, "INVALID_STATUS")
         );
     }
 }

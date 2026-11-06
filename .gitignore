@@ -1,7 +1,12 @@
-# Database configuration
+# Local database credentials and environment files
+# Keep the real db.properties local; commit only the example template.
 db.properties
+src/main/resources/db.properties
+.env
+.env.*
+!.env.example
 
-# Maven
+# Maven build output
 target/
 
 # IDE
